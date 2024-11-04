@@ -26,7 +26,7 @@ namespace DesafioAlura.RPA.Infraestrutura.Repositorios
                     parametros.Add("@CURSO_NOME", cursoNome);
                     parametros.Add("@CURSO_DESCRICAO", cursoDescricao);
 
-                    await dbConn.ExecuteAsync("SP_INSERIR_CURSO_LOG", parametros, commandType: CommandType.StoredProcedure);
+                    await dbConn.ExecuteAsync("SP_INSERIR_CURSO", parametros, commandType: CommandType.StoredProcedure);
                 }
                 catch (Exception ex)
                 {

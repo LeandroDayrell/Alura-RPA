@@ -6,9 +6,15 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        string urlBusca = ConfigurationHelper.GetConfiguration()["Configuracoes:UrlBusca"];
-        var cursoServico = new CursoServico(urlBusca);
+        // Carrega a URL e a palavra-chave do appsettings.json
+        var configuracao = ConfigurationHelper.GetConfiguration();
+        string urlBusca = configuracao["Configuracoes:UrlBusca"];
+        string palavraChave = configuracao["Configuracoes:PalavraChave"];
 
+        // Instancia o serviço com a URL e a palavra-chave
+        var cursoServico = new CursoServico(urlBusca, palavraChave);
+
+        // Executa o processo de busca
         await cursoServico.RealizarBuscaCursos();
     }
 }

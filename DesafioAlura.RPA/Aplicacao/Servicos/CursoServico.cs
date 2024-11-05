@@ -124,7 +124,7 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
 
                     if (curso != null)
                     {
-                        await Consulta.InserirCursoLog(curso.Titulo, curso.Descricao, curso.Professor, curso.CargaHoraria, curso.UltimaAtualizacao, curso.PublicoAlvo);
+                        //await Consulta.InserirCursoLog(curso.Titulo, curso.Descricao, curso.Professor, curso.CargaHoraria, curso.UltimaAtualizacao, curso.PublicoAlvo);
                         Console.WriteLine("Curso inserido no banco de dados com sucesso.");
                     }
 
@@ -145,6 +145,7 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
         {
             try
             {
+                ScreenshotHelper.CapturarScreenshot(_driver, "DadosPrincipais");
                 // Captura o título e a descrição do curso
                 var titulo = _driver.FindElement(By.CssSelector("h4.busca-resultado-nome")).Text;
                 var descricao = _driver.FindElement(By.CssSelector("p.busca-resultado-descricao")).Text;
@@ -176,6 +177,7 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
 
             try
             {
+                ScreenshotHelper.CapturarScreenshot(_driver, "DadosDaPagina");
                 // Captura o título e a descrição do curso
                 var Professor = _driver.FindElement(By.CssSelector("h3.instructor-title--name")).Text;
                 var CargaHoraria = _driver.FindElement(By.CssSelector("p.courseInfo-card-wrapper-infos")).Text;

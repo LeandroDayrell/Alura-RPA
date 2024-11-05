@@ -35,6 +35,7 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
                     NavegarParaPaginaDeBusca();
                     if (await ExecutarBuscaPalavraChave())
                     {
+                        await AdicionarFiltro(_driver);
                         await VerificarEProcessarResultados();
                     }
                 }
@@ -89,6 +90,7 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
             ScreenshotHelper.CapturarScreenshot(_driver, "Resultados_Busca");
             Console.WriteLine("Cursos encontrados.");
 
+            
             await ProcessarCursosEncontrados();
         }
 
@@ -145,6 +147,53 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
                 }
             }
         }
+
+        // Criar metodo para capturar informações do curso
+        private async Task CapturarInformacoesCurso(WebDriver _driver)
+        {
+
+        }
+
+        private async Task AdicionarFiltro(IWebDriver driver)
+        {
+            // Carrega o tipo de curso a partir do appsettings.json
+            var configuracao = ConfigurationHelper.GetConfiguration();
+            string tipoDeCurso = configuracao["Configuracoes:TipoDeCurso"];
+
+            try
+            {
+                // Abrindo o menu de Filtro
+                var botaoFiltro = _driver.FindElement(By.CssSelector("#busca-form > span"));
+                botaoFiltro.Click();
+
+                // Localiza o filtr
+                var filtros = _driver.FindElements(By.CssSelector("#busca--filtros--tipos .busca--filtro--nome-filtro"));
+
+                // Encontra o filtro correspondente ao texto especificado
+                var filtroSelecionado = filtros.FirstOrDefault(f => f.Text.Trim().Equals(tipoDeCurso, StringComparison.OrdinalIgnoreCase));
+
+                if (filtroSelecionado != null)
+                {
+                    // Clica no filtro correspondente
+                    filtroSelecionado.Click();
+                    Console.WriteLine($"Filtro aplicado: {tipoDeCurso}");
+                }
+                else
+                {
+                    Console.WriteLine($"Filtro '{tipoDeCurso}' não encontrado.");
+                }
+
+                var botaoPesquisarComFiltro = _driver.FindElement(By.CssSelector("input.busca-form-botao.--desktop"));
+                botaoPesquisarComFiltro.Click();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao aplicar filtro: {ex.Message}");
+                await RegistrarErro("Erro ao aplicar filtro", ex);
+            }
+        }
+
+
 
         private async Task RegistrarErro(string mensagem, Exception ex)
         {

@@ -4,7 +4,7 @@ using OpenQA.Selenium;
 
 namespace DesafioAlura.RPA.Helpers
 {
-    public static class ScreenshotHelper
+    public class ScreenshotHelper
     {
         private static readonly string _diretorioCapturas = Path.Combine(Directory.GetCurrentDirectory(), "Capturas");
 

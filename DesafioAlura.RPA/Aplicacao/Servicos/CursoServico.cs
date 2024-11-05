@@ -7,6 +7,7 @@ using DesafioAlura.RPA.Helpers;
 using DesafioAlura.RPA.Aplicacao;
 using System.Linq;
 using System.Collections.Generic;
+using Microsoft.Extensions.Configuration;
 
 namespace DesafioAlura.RPA.Aplicacao.Servicos
 {
@@ -17,11 +18,11 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
         private readonly IWebDriver _driver;
         private WebDriverWait _wait;
 
-        public CursoServico(string urlBusca, string palavraChave, IWebDriver driver)
+        public CursoServico(IConfiguration configuration, IWebDriver driver)
         {
-            _urlBusca = urlBusca;
-            _palavraChave = palavraChave;
-            _driver = driver; // Reutiliza o driver passado
+            _urlBusca = configuration["Configuracoes:UrlBusca"];
+            _palavraChave = configuration["Configuracoes:PalavraChave"];
+            _driver = driver;
             _wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(10));
         }
 
@@ -105,11 +106,15 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
                     string urlCurso = linkCurso.GetAttribute("href");
                     Console.WriteLine($"Acessando curso: {urlCurso}");
 
+                    CapturarInformacoesPaginaPrincipal();
+
                     ((IJavaScriptExecutor)_driver).ExecuteScript("window.open();");
                     _driver.SwitchTo().Window(_driver.WindowHandles.Last());
                     _driver.Navigate().GoToUrl(urlCurso);
 
                     _wait.Until(drv => drv.FindElement(By.CssSelector("h1")));
+
+                    CapturarInformacoesDentroPagina();
 
                     _driver.Close();
                     _driver.SwitchTo().Window(_driver.WindowHandles.First());
@@ -123,9 +128,34 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
             }
         }
 
-        private async Task CapturarInformacoesCurso(WebDriver _driver)
+        private async Task CapturarInformacoesPaginaPrincipal()
         {
-            // Implementar captura de informações do curso, se necessário
+            try
+            {
+                // Localiza o título e a descrição do curso na página principal de resultados
+                var titulo = _driver.FindElement(By.CssSelector("h4.busca-resultado-nome")).Text;
+                var descricao = _driver.FindElement(By.CssSelector("p.busca-resultado-descricao")).Text;
+
+                Console.WriteLine($"Título: {titulo}");
+                Console.WriteLine($"Descrição: {descricao}");
+            }
+            catch (NoSuchElementException ex)
+            {
+                Console.WriteLine("Erro ao capturar título ou descrição: Elemento não encontrado.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro inesperado ao capturar informações: {ex.Message}");
+            }
+        }
+
+        private async Task CapturarInformacoesDentroPagina()
+        {
+            var cargaHoraria = _driver.FindElement(By.CssSelector(".carga-horaria")).Text;
+            var preco = _driver.FindElement(By.CssSelector(".preco")).Text;
+
+            Console.WriteLine($"Carga Horária: {cargaHoraria}");
+            Console.WriteLine($"Preço: {preco}");
         }
 
         private async Task AdicionarFiltro(IWebDriver driver)

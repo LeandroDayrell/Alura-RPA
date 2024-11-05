@@ -3,7 +3,7 @@ using System.IO;
 
 namespace DesafioAlura.RPA.Helpers
 {
-    public static class ConfigurationHelper
+    public class ConfigurationHelper
     {
         private static IConfiguration _configuracao;
 

@@ -12,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace DesafioAlura.RPA.Helpers
 {
-    public static class ChromeDriverManager
+    public class ChromeDriverManager
     {
         private static readonly string ChromeDriverPath = Path.Combine(Directory.GetCurrentDirectory(), "Drivers");
 

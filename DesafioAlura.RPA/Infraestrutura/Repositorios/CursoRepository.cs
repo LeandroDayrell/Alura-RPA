@@ -14,7 +14,7 @@ namespace DesafioAlura.RPA.Infraestrutura.Repositorios
             _connectionString = connectionString;
         }
 
-        public async Task InserirCursoLog(long cursoId, string cursoNome, string cursoDescricao)
+        public async Task InserirCursoLog(string cursoTitulo, string cursoDescricao, string cursoProfessor, string cursoCargaHoraria, DateTime cursoUltimaAtualizacao, string cursoPublicoAlvo)
         {
             using (var dbConn = new SqlConnection(_connectionString))
             {
@@ -22,9 +22,12 @@ namespace DesafioAlura.RPA.Infraestrutura.Repositorios
                 {
                     await dbConn.OpenAsync();
                     var parametros = new DynamicParameters();
-                    parametros.Add("@CURSO_ID", cursoId);
-                    parametros.Add("@CURSO_NOME", cursoNome);
+                    parametros.Add("@CURSO_TITULO", cursoTitulo);
                     parametros.Add("@CURSO_DESCRICAO", cursoDescricao);
+                    parametros.Add("@CURSO_PROFESSOR", cursoProfessor);
+                    parametros.Add("@CURSO_CARGAHORARIO", cursoCargaHoraria);
+                    parametros.Add("@CURSO_ULTIMAATUALIZACAO", cursoUltimaAtualizacao);
+                    parametros.Add("@CURSO_PUBLICOALVO", cursoPublicoAlvo);
 
                     await dbConn.ExecuteAsync("SP_INSERIR_CURSO", parametros, commandType: CommandType.StoredProcedure);
                 }

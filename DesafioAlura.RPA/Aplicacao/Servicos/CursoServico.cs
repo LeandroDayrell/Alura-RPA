@@ -8,6 +8,8 @@ using DesafioAlura.RPA.Aplicacao;
 using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
+using DesafioAlura.RPA.Dominio.Entidades;
+using System.Globalization;
 
 namespace DesafioAlura.RPA.Aplicacao.Servicos
 {
@@ -106,15 +108,25 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
                     string urlCurso = linkCurso.GetAttribute("href");
                     Console.WriteLine($"Acessando curso: {urlCurso}");
 
-                    CapturarInformacoesPaginaPrincipal();
+                    // Captura informações do curso na página principal
+                    var curso = await CapturarInformacoesPaginaPrincipal();
 
+                    // Insere o curso no banco de dados, se as informações forem capturadas com sucesso
+
+                    // Continua com a navegação
                     ((IJavaScriptExecutor)_driver).ExecuteScript("window.open();");
                     _driver.SwitchTo().Window(_driver.WindowHandles.Last());
                     _driver.Navigate().GoToUrl(urlCurso);
 
+                    await CapturarInformacoesDentroPagina(curso);
+
                     _wait.Until(drv => drv.FindElement(By.CssSelector("h1")));
 
-                    CapturarInformacoesDentroPagina();
+                    if (curso != null)
+                    {
+                        await Consulta.InserirCursoLog(curso.Titulo, curso.Descricao, curso.Professor, curso.CargaHoraria, curso.UltimaAtualizacao, curso.PublicoAlvo);
+                        Console.WriteLine("Curso inserido no banco de dados com sucesso.");
+                    }
 
                     _driver.Close();
                     _driver.SwitchTo().Window(_driver.WindowHandles.First());
@@ -128,16 +140,60 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
             }
         }
 
-        private async Task CapturarInformacoesPaginaPrincipal()
+
+        private async Task<Curso> CapturarInformacoesPaginaPrincipal()
         {
             try
             {
-                // Localiza o título e a descrição do curso na página principal de resultados
+                // Captura o título e a descrição do curso
                 var titulo = _driver.FindElement(By.CssSelector("h4.busca-resultado-nome")).Text;
                 var descricao = _driver.FindElement(By.CssSelector("p.busca-resultado-descricao")).Text;
 
                 Console.WriteLine($"Título: {titulo}");
                 Console.WriteLine($"Descrição: {descricao}");
+
+                // Cria e retorna uma nova instância de Curso com as informações capturadas
+                return new Curso
+                {
+                    Titulo = titulo,
+                    Descricao = descricao
+                };
+            }
+            catch (NoSuchElementException ex)
+            {
+                Console.WriteLine("Erro ao capturar título ou descrição: Elemento não encontrado.");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro inesperado ao capturar informações: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task CapturarInformacoesDentroPagina(Curso curso)
+        {
+
+            try
+            {
+                // Captura o título e a descrição do curso
+                var Professor = _driver.FindElement(By.CssSelector("h3.instructor-title--name")).Text;
+                var CargaHoraria = _driver.FindElement(By.CssSelector("p.courseInfo-card-wrapper-infos")).Text;
+                var UltimaAtualizacao = _driver.FindElement(By.CssSelector("div.course-container--update")).Text;
+                var PublicoAlvo = _driver.FindElement(By.CssSelector("p.couse-text--target-audience")).Text;
+
+                var UltimaAtualizacaoConvertida = ConverterDataUltimaAtualizacao(UltimaAtualizacao);
+
+                Console.WriteLine($"Professor: {Professor}");
+                Console.WriteLine($"Carga Horária: {CargaHoraria}");
+                Console.WriteLine($"Última Atualização: {UltimaAtualizacaoConvertida}");
+                Console.WriteLine($"Público Alvo: {PublicoAlvo}");
+
+                // Cria e retorna uma nova instância de Curso com as informações capturadas
+                curso.Professor = Professor;
+                curso.CargaHoraria = CargaHoraria;
+                curso.UltimaAtualizacao = UltimaAtualizacaoConvertida;
+                curso.PublicoAlvo = PublicoAlvo;
             }
             catch (NoSuchElementException ex)
             {
@@ -147,15 +203,6 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
             {
                 Console.WriteLine($"Erro inesperado ao capturar informações: {ex.Message}");
             }
-        }
-
-        private async Task CapturarInformacoesDentroPagina()
-        {
-            var cargaHoraria = _driver.FindElement(By.CssSelector(".carga-horaria")).Text;
-            var preco = _driver.FindElement(By.CssSelector(".preco")).Text;
-
-            Console.WriteLine($"Carga Horária: {cargaHoraria}");
-            Console.WriteLine($"Preço: {preco}");
         }
 
         private async Task AdicionarFiltro(IWebDriver driver)
@@ -196,6 +243,25 @@ namespace DesafioAlura.RPA.Aplicacao.Servicos
             ScreenshotHelper.CapturarScreenshot(_driver, "ErroExecucao");
             File.AppendAllText("Log.txt", $"[{DateTime.Now}] {mensagem}: {ex.Message}\n");
             Console.WriteLine($"{mensagem} - Erro registrado e screenshot capturada.");
+        }
+
+        public DateTime ConverterDataUltimaAtualizacao(string ultimaAtualizacao)
+        {
+            // Remove o prefixo "Curso atualizado em " e extrai apenas a data
+            string dataString = ultimaAtualizacao.Replace("Curso atualizado em ", "").Trim();
+
+            // Converte a data extraída para DateTime
+            if (DateTime.TryParseExact(dataString, "dd/MM/yyyy",
+                                       CultureInfo.InvariantCulture,
+                                       DateTimeStyles.None,
+                                       out DateTime dataConvertida))
+            {
+                return dataConvertida;
+            }
+            else
+            {
+                throw new FormatException("A data está em um formato incorreto.");
+            }
         }
     }
 }
